@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>成就系統 — 後台工具示意介面</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#f0f2f5;color:#333;font-family:'Segoe UI','PingFang TC','Microsoft JhengHei',sans-serif;font-size:13px;display:flex;min-height:100vh;}
+  .sidenav{width:155px;background:#1e2a3a;flex-shrink:0;display:flex;flex-direction:column;overflow-y:auto;}
+  .sidenav-top{padding:12px 10px;border-bottom:1px solid #2e3f55;}
+  .sidenav-logo{font-size:11px;color:#9ab;text-align:center;line-height:1.4;}
+  .sidenav-logo .env{display:inline-block;background:#3ecf8e;color:#fff;font-size:10px;padding:1px 6px;border-radius:2px;margin-top:4px;}
+  .nav-arrows{display:flex;gap:4px;padding:8px 10px;}
+  .nav-arrow{background:#2a3c50;border:none;color:#7a9ab8;width:24px;height:24px;border-radius:3px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;}
+  .nav-item{display:block;padding:8px 14px;color:#b0c4d8;font-size:12px;cursor:pointer;border-left:3px solid transparent;text-decoration:none;transition:all .15s;}
+  .nav-item:hover{background:#253547;color:#fff;}
+  .nav-sub{display:block;padding:6px 14px 6px 22px;color:#7a9ab8;font-size:11px;cursor:pointer;border-left:3px solid transparent;transition:all .15s;text-decoration:none;}
+  .nav-sub:hover{background:#253547;color:#cde;}
+  .nav-sub.ach{color:#f5c842;border-left-color:#f5c842;background:#1a3050;}
+  .nav-sub.popup{color:#3ecf8e;border-left-color:#3ecf8e;background:#1a3050;}
+  .main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+  .topbar{background:#1e2a3a;padding:8px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #2e3f55;}
+  .topbar-title{font-size:13px;font-weight:700;color:#fff;}
+  .topbar-right{font-size:12px;color:#9ab;}
+  .page{display:none;flex-direction:column;flex:1;overflow:hidden;}
+  .page.active{display:flex;}
+  .content{padding:24px 28px;overflow-y:auto;flex:1;}
+  .page-title{font-size:18px;font-weight:700;color:#222;margin-bottom:20px;}
+  .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px;}
+  .date-picker{border:1px solid #ccc;border-radius:3px;padding:5px 10px;font-size:12px;color:#333;background:#fff;display:flex;align-items:center;gap:6px;}
+  .search-input{border:1px solid #ccc;border-radius:3px;padding:5px 10px;font-size:12px;color:#333;background:#fff;outline:none;width:160px;}
+  .search-input:focus{border-color:#4ea8de;}
+  .f-select-sm{border:1px solid #ccc;border-radius:3px;padding:5px 8px;font-size:12px;color:#333;background:#fff;outline:none;}
+  .t-btn{padding:5px 14px;border-radius:3px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:opacity .15s;}
+  .t-btn.confirm{background:#4ea8de;color:#fff;}
+  .t-btn.new{background:#f5c842;color:#111;}
+  .t-btn.batch{background:#fff;color:#555;border:1px solid #ccc;}
+  .t-btn:hover{opacity:.85;}
+  .table-wrap{background:#fff;border:1px solid #dde;border-radius:4px;overflow:auto;}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  th{background:#eef1f6;color:#555;padding:10px 12px;text-align:left;border-bottom:1px solid #dde;white-space:nowrap;font-weight:600;}
+  th .si{color:#aaa;margin-left:4px;font-size:10px;}
+  td{padding:10px 12px;border-bottom:1px solid #eef;vertical-align:middle;}
+  tr:nth-child(even) td{background:#f7f9fc;}
+  tr:hover td{background:#eef5ff;}
+  .id-link{color:#4ea8de;cursor:pointer;text-decoration:none;}
+  .sort-box{display:inline-flex;align-items:center;justify-content:center;border:1px solid #ccc;border-radius:3px;width:40px;height:28px;font-size:12px;background:#fff;}
+  .status-btn{display:inline-block;font-size:11px;font-weight:700;padding:2px 10px;border-radius:2px;}
+  .status-btn.started{color:#1a7;border:1px solid #1a7;background:#efffef;}
+  .status-btn.pending{color:#e80;border:1px solid #e80;background:#fffaee;}
+  .op-btn{display:inline-block;padding:2px 8px;border:1px solid #ccc;border-radius:2px;font-size:11px;color:#555;cursor:pointer;background:#fff;margin-bottom:3px;}
+  .op-btn:hover{border-color:#4ea8de;color:#4ea8de;}
+  /* MODAL */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:flex-start;justify-content:center;padding:30px 0;overflow-y:auto;}
+  .modal-overlay.show{display:flex;}
+  .modal{background:#fff;border-radius:4px;width:680px;position:relative;box-shadow:0 8px 40px rgba(0,0,0,.3);}
+  .modal-header{padding:14px 20px;border-bottom:1px solid #e0e0e0;display:flex;align-items:center;justify-content:space-between;}
+  .modal-header h3{font-size:14px;font-weight:700;color:#333;}
+  .modal-close{background:none;border:none;font-size:20px;color:#aaa;cursor:pointer;line-height:1;}
+  .modal-close:hover{color:#333;}
+  .modal-body{padding:20px 28px;max-height:76vh;overflow-y:auto;}
+  .modal-footer{display:flex;justify-content:flex-end;gap:8px;padding:12px 20px;border-top:1px solid #e0e0e0;background:#fafafa;}
+  /* FORM */
+  .form-row{display:flex;align-items:flex-start;margin-bottom:14px;gap:8px;}
+  .fl{min-width:180px;font-size:13px;color:#333;padding-top:7px;flex-shrink:0;line-height:1.4;}
+  .req{color:#c00;}
+  .f-input{flex:1;border:1px solid #ccc;border-radius:3px;padding:6px 10px;font-size:13px;color:#333;background:#fff;outline:none;}
+  .f-input:focus{border-color:#4ea8de;}
+  .f-input:disabled{background:#f5f5f5;color:#aaa;cursor:not-allowed;}
+  .f-select{flex:1;border:1px solid #ccc;border-radius:3px;padding:6px 10px;font-size:13px;color:#333;background:#fff;outline:none;}
+  .f-auto{flex:1;border:1px solid #e0e0e0;border-radius:3px;padding:6px 10px;font-size:13px;color:#999;background:#f9f9f9;font-style:italic;}
+  .f-ro{flex:1;border:1px solid #e8e8e8;border-radius:3px;padding:6px 10px;font-size:13px;color:#888;background:#f5f5f5;}
+  .f-hint{font-size:11px;color:#c00;padding-top:8px;margin-left:6px;white-space:nowrap;}
+  /* TYPE BTNS */
+  .type-group{display:flex;gap:6px;flex-wrap:wrap;flex:1;}
+  .type-btn{padding:5px 14px;border:1px solid #ccc;border-radius:3px;background:#fff;color:#555;font-size:12px;cursor:pointer;transition:all .15s;}
+  .type-btn.active{background:#4ea8de;color:#fff;border-color:#4ea8de;}
+  /* TASK */
+  .section-div{border:none;border-top:1px solid #e0e0e0;margin:16px 0;}
+  .section-ttl{font-size:13px;font-weight:700;color:#333;margin-bottom:12px;}
+  .task-block{border:1px solid #ddd;border-radius:3px;background:#fafafa;padding:14px 16px;margin-bottom:10px;}
+  .task-num-badge{display:inline-block;background:#4ea8de;color:#fff;border-radius:3px;padding:3px 12px;font-size:12px;font-weight:700;margin-bottom:12px;}
+  .inline-label{font-size:12px;color:#666;white-space:nowrap;}
+  .add-files-btn{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;border:1px solid #ccc;border-radius:3px;background:#fff;color:#555;font-size:12px;cursor:pointer;}
+  .add-files-btn:hover{border-color:#4ea8de;color:#4ea8de;}
+  .form-submit-btn{background:#4ea8de;color:#fff;border:none;border-radius:3px;padding:7px 22px;font-size:13px;font-weight:600;cursor:pointer;}
+  .form-submit-btn:hover{opacity:.9;}
+  .form-cancel-btn{background:#fff;color:#555;border:1px solid #ccc;border-radius:3px;padding:7px 22px;font-size:13px;cursor:pointer;}
+  .form-cancel-btn:hover{border-color:#888;}
+  ::-webkit-scrollbar{width:5px;height:5px;}::-webkit-scrollbar-track{background:#f0f0f0;}::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px;}
+</style>
+</head>
+<body>
+
+<!-- SIDENAV -->
+<nav class="sidenav">
+  <div class="sidenav-top">
+    <div class="nav-arrows"><button class="nav-arrow">‹</button><button class="nav-arrow">›</button></div>
+    <div class="sidenav-logo">スーパーラッキカジノ後台工具<br><span class="env">正式環境</span></div>
+  </div>
+  <a class="nav-item" href="#">營收分析</a>
+  <a class="nav-item" href="#">運營工具</a>
+  <a class="nav-item" href="#">限時組裝</a>
+  <a class="nav-item" href="#">系統版號相關</a>
+  <a class="nav-item" href="#">平台相關設定</a>
+  <a class="nav-item" href="#">遊戲相關設定</a>
+  <a class="nav-item" href="#">機台活動設定</a>
+  <a class="nav-item" href="#">水族樂園</a>
+  <a class="nav-item" href="#">轉轉樂</a>
+  <a class="nav-item" href="#">世足賽</a>
+  <a class="nav-item" href="#">世棒賽</a>
+  <a class="nav-item" href="#">付費點</a>
+  <a class="nav-item" href="#">留存活動</a>
+  <a class="nav-item" href="#">任務賽事</a>
+  <a class="nav-sub" href="#">活動排行榜</a>
+  <a class="nav-sub" href="#">二幣排行榜</a>
+  <a class="nav-sub" href="#" onclick="showPage('ach');return false;">活動任務設定</a>
+  <a class="nav-sub ach" href="#" onclick="showPage('ach');return false;">成就任務設定</a>
+  <a class="nav-sub popup" href="#" onclick="showPage('popup');return false;">成就任務 彈窗設定</a>
+  <a class="nav-sub" href="#">刮刮卡排行榜</a>
+  <a class="nav-sub" href="#">名人堂</a>
+  <a class="nav-item" href="#">大型活動</a>
+  <a class="nav-item" href="#">個資查詢</a>
+  <a class="nav-item" href="#">客服工具</a>
+  <a class="nav-item" href="#">活動宣傳</a>
+  <a class="nav-item" href="#">狩獵懸賞</a>
+  <a class="nav-item" href="#">金幣刮刮卡</a>
+  <a class="nav-item" href="#">二幣小遊戲</a>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">スーパーラッキカジノ後台工具</div>
+    <div class="topbar-right">吳玫萱 ▾</div>
+  </div>
+
+  <!-- ══ PAGE 1: 成就任務設定 ══ -->
+  <div class="page active" id="page-ach">
+    <div class="content">
+      <div class="page-title">成就任務設定</div>
+      <div class="toolbar">
+        <div class="date-picker">📅 <span>2026年05月01日 ～ 2026年07月17日</span> ▾</div>
+        <input class="search-input" placeholder="成就任務名稱" id="achSearch" oninput="achFilter()">
+        <!-- 成就類型篩選 -->
+        <select class="f-select-sm" id="achTypeFilter" onchange="achFilter()">
+          <option value="">成就類型</option>
+          <option>新手</option><option>生涯</option><option>魚機</option>
+          <option>老虎機</option><option>活動</option><option>二幣</option><option>其他</option>
+        </select>
+        <!-- 子類別篩選 -->
+        <select class="f-select-sm" id="achSubFilter" onchange="achFilter()">
+          <option value="">子類別</option>
+        </select>
+        <button class="t-btn confirm">確定</button>
+        <button class="t-btn new" onclick="openAchModal()">新增</button>
+        <button class="t-btn batch">批次改排序</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>成就ID</th><th>成就類型</th><th>開始時間 <span class="si">▼</span></th>
+            <th>成就任務名稱</th>
+            <th>建立時間 <span class="si">▲</span></th><th>最後編輯時間</th>
+            <th>異動人員</th><th>操作</th><th>狀態</th>
+          </tr></thead>
+          <tbody id="achBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PAGE 2: 成就任務 彈窗設定 ══ -->
+  <div class="page" id="page-popup">
+    <div class="content">
+      <div class="page-title">成就任務 彈窗設定</div>
+      <div class="toolbar">
+        <div class="date-picker">📅 <span>2026年05月01日 ～ 2026年07月17日</span> ▾</div>
+        <select class="f-select-sm" id="popupTypeFilter" onchange="popupFilter()">
+          <option value="">成就任務名稱</option>
+          <option>新手</option><option>生涯</option><option>魚機</option>
+          <option>老虎機</option><option>活動</option><option>二幣</option><option>其他</option>
+        </select>
+        <button class="t-btn confirm">確定</button>
+        <button class="t-btn new" onclick="openPopupModal()">新增</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>成就ID</th><th>成就類型</th><th>排序</th>
+            <th>成就任務類型</th>
+            <th>建立時間</th><th>最後編輯時間</th>
+            <th>異動人員</th><th>操作</th><th>狀態</th>
+          </tr></thead>
+          <tbody id="popupBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: 新增成就系統 ══ -->
+<div class="modal-overlay" id="achModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>新增成就系統</h3>
+      <button class="modal-close" onclick="closeAchModal()">×</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="form-row">
+        <div class="fl">活動ID：</div>
+        <div class="f-ro">系統自動產生</div>
+      </div>
+
+      <div class="form-row">
+        <div class="fl"><span class="req">*</span>成就任務名稱：</div>
+        <input class="f-input" id="achName">
+        <span style="font-size:11px;color:#888;padding-top:8px;white-space:nowrap;">（自己看，遊戲內未顯示）</span>
+      </div>
+
+      <!-- 成就類型：全部展開為7個按鈕 -->
+      <div class="form-row">
+        <div class="fl"><span class="req">*</span>成就類型：</div>
+        <div class="type-group" id="achTypeGroup">
+          <button class="type-btn" onclick="selAchType(this)">新手</button>
+          <button class="type-btn" onclick="selAchType(this)">生涯</button>
+          <button class="type-btn" onclick="selAchType(this)">魚機</button>
+          <button class="type-btn" onclick="selAchType(this)">老虎機</button>
+          <button class="type-btn" onclick="selAchType(this)">活動</button>
+          <button class="type-btn" onclick="selAchType(this)">二幣</button>
+          <button class="type-btn" onclick="selAchType(this)">其他</button>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="fl"><span class="req">*</span>遊戲內顯示名稱_日文：</div>
+        <input class="f-input" placeholder="EX：累積登入次数" id="achDisplayJa">
+        <div class="f-hint">（此欄會顯示在遊戲內）</div>
+      </div>
+
+      <!-- 排序 → 成就稱號 -->
+      <div class="form-row">
+        <div class="fl"><span class="req">*</span>成就稱號：</div>
+        <input class="f-input" placeholder="" id="achTitle" style="max-width:220px;">
+      </div>
+
+      <div class="form-row">
+        <div class="fl"><span class="req">*</span>活動開始時間：</div>
+        <input class="f-input" placeholder="YYYY/MM/DD  HH:MM" id="achStart" style="max-width:220px;">
+      </div>
+
+      <hr class="section-div">
+      <div class="section-ttl">成就任務設定：</div>
+
+      <!-- 單一任務區塊（固定，不可新增多個） -->
+      <div class="task-block">
+        <div class="task-num-badge">1</div>
+
+        <!-- GOOGLE成就ID（非必填，在成就任務上方） -->
+        <div class="form-row">
+          <div class="fl">GOOGLE成就ID：</div>
+          <input class="f-input" placeholder="">
+          <span style="font-size:11px;color:#888;padding-top:8px;white-space:nowrap;">非必填</span>
+        </div>
+
+        <div class="form-row">
+          <div class="fl"><span class="req">*</span>成就任務：</div>
+          <select class="f-select"><option value="">請選擇</option></select>
+        </div>
+
+        <div class="form-row">
+          <div class="fl">獎勵導向外部連結：</div>
+          <input class="f-input" placeholder="">
+        </div>
+
+        <div class="form-row">
+          <div class="fl"><span class="req">*</span>遊戲內顯示名稱_日文：</div>
+          <input class="f-auto" placeholder="系統自動帶入" readonly>
+        </div>
+
+        <div class="form-row" style="align-items:center;">
+          <div class="fl">獎勵價值(金幣)：</div>
+          <span style="font-size:12px;color:#aaa;">（系統自動計算）</span>
+        </div>
+
+        <div class="form-row">
+          <div class="fl">成就點數：</div>
+          <input class="f-input" disabled placeholder="暫不開放" style="max-width:120px;background:#f5f5f5;color:#aaa;">
+        </div>
+
+        <div class="form-row" style="align-items:center;gap:6px;flex-wrap:nowrap;">
+          <div class="fl" style="flex-shrink:0;">道具 1：</div>
+          <select class="f-select" style="max-width:150px;flex-shrink:0;"><option value="">請選擇道具</option><option>道具卡 1:1</option><option>道具卡 3星</option><option>福袋</option></select>
+          <span class="inline-label">數量：</span><input class="f-input" type="number" style="max-width:60px;flex-shrink:0;">
+          <span class="inline-label">使用期限(天)：</span><input class="f-input" type="number" style="max-width:60px;flex-shrink:0;">
+        </div>
+
+        <div class="form-row" style="align-items:center;gap:6px;flex-wrap:nowrap;">
+          <div class="fl" style="flex-shrink:0;">道具 2：</div>
+          <select class="f-select" style="max-width:150px;flex-shrink:0;"><option value="">請選擇道具</option><option>道具卡 1:1</option><option>道具卡 3星</option><option>福袋</option></select>
+          <span class="inline-label">數量：</span><input class="f-input" type="number" style="max-width:60px;flex-shrink:0;">
+          <span class="inline-label">使用期限(天)：</span><input class="f-input" type="number" style="max-width:60px;flex-shrink:0;">
+        </div>
+
+        <div class="form-row" style="align-items:center;">
+          <div class="fl">成就任務徽章，上傳圖片：</div>
+          <button class="add-files-btn">＋ Add files...</button>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="form-cancel-btn" onclick="closeAchModal()">取消</button>
+      <button class="form-submit-btn" onclick="submitAch()">確認送出</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: 成就任務彈窗設定 新增 ══ -->
+<div class="modal-overlay" id="popupModal">
+  <div class="modal" style="width:560px;">
+    <div class="modal-header">
+      <h3>新增 成就任務彈窗設定</h3>
+      <button class="modal-close" onclick="closePopupModal()">×</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="form-row">
+        <div class="fl"><span class="req">*</span>活動ID：</div>
+        <div class="f-ro">系統自動產生</div>
+      </div>
+
+      <div class="form-row">
+        <div class="fl"><span class="req">*</span>成就任務類型：</div>
+        <select class="f-select" id="popupType" onchange="onPopupTypeChange()">
+          <option value="">請選擇</option>
+          <option>新手</option><option>生涯</option><option>魚機</option>
+          <option>老虎機</option><option>活動</option><option>二幣</option><option>其他</option>
+        </select>
+      </div>
+
+      <div class="form-row" id="popupSubRow" style="display:none;">
+        <div class="fl"><span class="req">*</span>子類別：</div>
+        <select class="f-select" id="popupSub"><option value="">請選擇</option></select>
+      </div>
+
+      <div class="form-row">
+        <div class="fl"><span class="req">*</span>排序：</div>
+        <input class="f-input" type="number" min="1" id="popupSort" style="max-width:100px;">
+        <div class="f-hint">數字越大越前面</div>
+      </div>
+
+      <div class="form-row" style="align-items:center;">
+        <div class="fl">任務彈窗圖片，上傳圖片：</div>
+        <button class="add-files-btn">＋ Add files...</button>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="form-cancel-btn" onclick="closePopupModal()">取消</button>
+      <button class="form-submit-btn" onclick="submitPopup()">確認送出</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── 子類別對照 ──
+const subMap = {
+  '魚機':  ['威鯨傳奇7','勇者戰紀','三隻小豬','海4'],
+  '老虎機':['宙斯II','野牛風暴','金兔報喜','黃金瑪雅','好4多鳳','超級王牌'],
+  '活動':  ['組裝行動','水族樂園','好運滿天飛'],
+  '二幣':  ['全柏青斯洛'],
+  '其他':  ['皇家賽馬','金牌5PK'],
+  '新手':  [],
+  '生涯':  [],
+};
+
+// ── 彈窗設定：成就類型 → 子類別聯動 ──
+const popupSubMap = {
+  '新手':  [],
+  '生涯':  ['累積登入次數','累積等級升級','累積VIP升級','儲值累積','遊玩時長'],
+  '魚機':  ['威鯨傳奇7','勇者戰紀','三隻小豬','海4','大白鯊'],
+  '老虎機':['宙斯II','極地王者','野牛風暴','金兔報喜','黃金瑪雅','好4多鳳','超級王牌','華燈盛宴','九天','阿茲特克'],
+  '活動':  ['組裝行動','水族樂園','好運滿天飛','轉轉樂'],
+  '二幣':  ['全柏青斯洛','吉宗','押忍！番長ZERO'],
+  '其他':  ['皇家賽馬','金牌5PK','多人麻將'],
+};
+function onPopupTypeChange(){
+  const t = document.getElementById('popupType').value;
+  const row = document.getElementById('popupSubRow');
+  const sub = document.getElementById('popupSub');
+  const list = popupSubMap[t] || [];
+  if(list.length > 0){
+    sub.innerHTML = '<option value="">請選擇</option>' + list.map(s=>`<option>${s}</option>`).join('');
+    row.style.display = 'flex';
+  } else {
+    row.style.display = 'none';
+    sub.innerHTML = '<option value="">請選擇</option>';
+  }
+}
+
+// 主畫面類型篩選 → 更新子類別下拉
+document.getElementById('achTypeFilter').addEventListener('change', function(){
+  const sub = document.getElementById('achSubFilter');
+  const list = subMap[this.value] || [];
+  sub.innerHTML = '<option value="">子類別</option>' + list.map(s=>`<option>${s}</option>`).join('');
+  achFilter();
+});
+
+// ── 成就任務設定資料 ──
+const achData = [
+  {id:'ACH20260001',type:'新手', start:'2026/06/01 00:00',sort:10,name:'帳號綁定',    created:'2026/06/01 10:00',edited:'2026/06/01 10:00',user:'吳玫萱',status:'已啟動'},
+  {id:'ACH20260002',type:'新手', start:'2026/06/01 00:00',sort:9, name:'暱稱更換',    created:'2026/06/01 10:01',edited:'2026/06/01 10:01',user:'吳玫萱',status:'已啟動'},
+  {id:'ACH20260003',type:'新手', start:'2026/06/01 00:00',sort:8, name:'頭像更換',    created:'2026/06/01 10:02',edited:'2026/06/01 10:02',user:'吳玫萱',status:'已啟動'},
+  {id:'ACH20260004',type:'新手', start:'2026/06/01 00:00',sort:7, name:'首次登入',    created:'2026/06/01 10:03',edited:'2026/06/01 10:03',user:'吳玫萱',status:'活動開始'},
+  {id:'ACH20260005',type:'生涯', start:'2026/06/08 14:30',sort:15,name:'登入累計30次',created:'2026/06/08 09:00',edited:'2026/06/08 09:00',user:'吳玫萱',status:'活動開始'},
+  {id:'ACH20260006',type:'生涯', start:'2026/06/08 14:30',sort:14,name:'登入累計100次',created:'2026/06/08 09:01',edited:'2026/06/08 09:01',user:'吳玫萱',status:'活動開始'},
+  {id:'ACH20260007',type:'老虎機',start:'2026/06/11 17:31',sort:13,name:'野牛風暴系列',created:'2026/06/11 16:59',edited:'2026/06/11 17:00',user:'吳玫萱',status:'活動開始'},
+  {id:'ACH20260008',type:'魚機', start:'2026/06/12 21:30',sort:12,name:'威鯨傳奇系列',created:'2026/06/12 20:57',edited:'2026/06/12 20:58',user:'吳玫萱',status:'已啟動'},
+  {id:'ACH20260009',type:'活動', start:'2026/06/28 23:00',sort:21,name:'組裝行動(I)', created:'2026/06/02 15:49',edited:'2026/06/02 15:49',user:'吳玫萱',status:'已啟動'},
+  {id:'ACH20260010',type:'二幣', start:'2026/06/21 23:00',sort:21,name:'二幣累積押注', created:'2026/06/02 15:49',edited:'2026/06/02 15:49',user:'吳玫萱',status:'已啟動'},
+];
+
+// 彈窗設定資料
+const popupData = [
+  {id:'POP20260001',type:'老虎機',sort:10,task:'宙斯II',      created:'2026/06/01 10:00',edited:'2026/06/01 10:00',user:'吳玫萱',status:'已啟動'},
+  {id:'POP20260002',type:'老虎機',sort:9, task:'野牛風暴',    created:'2026/06/01 10:01',edited:'2026/06/01 10:01',user:'吳玫萱',status:'已啟動'},
+  {id:'POP20260003',type:'魚機',  sort:8, task:'海4',          created:'2026/06/01 10:02',edited:'2026/06/01 10:02',user:'吳玫萱',status:'活動開始'},
+  {id:'POP20260004',type:'活動',  sort:7, task:'組裝行動',     created:'2026/06/01 10:03',edited:'2026/06/01 10:03',user:'吳玫萱',status:'活動開始'},
+];
+
+function typeTag(t){
+  const m={'新手':'#f5a742','生涯':'#4ea8de','魚機':'#3ecf8e','老虎機':'#7c6dfa','活動':'#f25c5c','二幣':'#e0a800','其他':'#888'};
+  return `<span style="display:inline-block;padding:1px 8px;border-radius:2px;font-size:11px;font-weight:600;border:1px solid ${m[t]||'#ccc'};color:${m[t]||'#999'}">${t}</span>`;
+}
+function statusBtn(s){
+  return `<span class="status-btn ${s==='已啟動'?'started':'pending'}">【${s}】</span>`;
+}
+function nowStr(){
+  const d=new Date();
+  return `2026/06/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+// ── 成就任務設定 Table ──
+function renderAch(data){
+  document.getElementById('achBody').innerHTML = data.map(r=>`<tr>
+    <td><a class="id-link">${r.id}</a></td>
+    <td>${typeTag(r.type)}</td>
+    <td style="white-space:nowrap;color:#555;">${r.start}</td>
+    <td style="font-weight:600;">${r.name}</td>
+    <td style="white-space:nowrap;color:#777;font-size:11px;">${r.created}</td>
+    <td style="white-space:nowrap;color:#777;font-size:11px;">${r.edited}</td>
+    <td style="color:#555;">${r.user}</td>
+    <td style="white-space:nowrap;">
+      <div><button class="op-btn">檢示</button></div>
+      <div><button class="op-btn" onclick="copyAch('${r.id}')">複製</button></div>
+    </td>
+    <td>${statusBtn(r.status)}</td>
+  </tr>`).join('');
+}
+function achFilter(){
+  const q=document.getElementById('achSearch').value;
+  const t=document.getElementById('achTypeFilter').value;
+  const s=document.getElementById('achSubFilter').value;
+  renderAch(achData.filter(r=>
+    (!q||r.name.includes(q))&&(!t||r.type===t)&&(!s||r.name.includes(s))
+  ));
+}
+function copyAch(id){
+  const r=achData.find(r=>r.id===id);if(!r)return;
+  achData.unshift({...r,id:'ACH'+String(Date.now()).slice(-8),name:r.name+'（複本）',created:nowStr(),edited:nowStr(),status:'活動開始'});
+  achFilter();
+}
+
+// ── 彈窗設定 Table ──
+function renderPopup(data){
+  document.getElementById('popupBody').innerHTML = data.map(r=>`<tr>
+    <td><a class="id-link">${r.id}</a></td>
+    <td>${typeTag(r.type)}</td>
+    <td><span class="sort-box">${r.sort}</span></td>
+    <td style="font-weight:600;">${r.task}</td>
+    <td style="white-space:nowrap;color:#777;font-size:11px;">${r.created}</td>
+    <td style="white-space:nowrap;color:#777;font-size:11px;">${r.edited}</td>
+    <td style="color:#555;">${r.user}</td>
+    <td style="white-space:nowrap;">
+      <div><button class="op-btn">檢示</button></div>
+      <div><button class="op-btn" onclick="copyPopup('${r.id}')">複製</button></div>
+    </td>
+    <td>${statusBtn(r.status)}</td>
+  </tr>`).join('');
+}
+function popupFilter(){
+  const t=document.getElementById('popupTypeFilter').value;
+  renderPopup(t?popupData.filter(r=>r.type===t):popupData);
+}
+function copyPopup(id){
+  const r=popupData.find(r=>r.id===id);if(!r)return;
+  popupData.unshift({...r,id:'POP'+String(Date.now()).slice(-8),task:r.task+'（複本）',created:nowStr(),edited:nowStr(),status:'活動開始'});
+  renderPopup(popupData);
+}
+
+// ── 頁面切換 ──
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+}
+
+// ── Modal: 成就任務設定 ──
+function openAchModal(){ document.getElementById('achModal').classList.add('show'); }
+function closeAchModal(){
+  document.getElementById('achModal').classList.remove('show');
+  ['achName','achDisplayJa','achTitle','achStart'].forEach(id=>document.getElementById(id).value='');
+  document.querySelectorAll('#achTypeGroup .type-btn').forEach(b=>b.classList.remove('active'));
+}
+function selAchType(el){
+  document.querySelectorAll('#achTypeGroup .type-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+}
+function submitAch(){
+  const name=document.getElementById('achName').value.trim();
+  if(!name){alert('請填寫成就任務名稱');return;}
+  const t=document.querySelector('#achTypeGroup .type-btn.active');
+  if(!t){alert('請選擇成就類型');return;}
+  const start=document.getElementById('achStart').value||'—';
+  achData.unshift({id:'ACH'+String(Date.now()).slice(-8),type:t.textContent,start,sort:1,name,created:nowStr(),edited:nowStr(),user:'吳玫萱',status:'活動開始'});
+  achFilter(); closeAchModal();
+}
+
+// ── Modal: 彈窗設定 ──
+function openPopupModal(){ document.getElementById('popupModal').classList.add('show'); }
+function closePopupModal(){
+  document.getElementById('popupModal').classList.remove('show');
+  document.getElementById('popupType').value='';
+  document.getElementById('popupSort').value='';
+  document.getElementById('popupSubRow').style.display='none';
+  document.getElementById('popupSub').innerHTML='<option value="">請選擇</option>';
+}
+function submitPopup(){
+  const t=document.getElementById('popupType').value;
+  if(!t){alert('請選擇成就任務類型');return;}
+  const sort=parseInt(document.getElementById('popupSort').value)||1;
+  popupData.unshift({id:'POP'+String(Date.now()).slice(-8),type:t,sort,task:'（新增）',created:nowStr(),edited:nowStr(),user:'吳玫萱',status:'活動開始'});
+  renderPopup(popupData); closePopupModal();
+}
+
+// ── Init ──
+renderAch(achData);
+renderPopup(popupData);
+</script>
+</body>
+</html>
